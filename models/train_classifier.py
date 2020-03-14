@@ -24,13 +24,14 @@ from sqlalchemy import create_engine
 from sqlalchemy import inspect
 from textblob import TextBlob
 from pathlib import Path
+import pickle
 
 nltk.download('punkt')
 nltk.download('wordnet')
 nltk.download('stopwords')
 
 
-def load_data(database_filename):
+def load_data(database_filepath):
     base_dir = Path(__file__).resolve().parent.parent
     db = base_dir.joinpath(Path(database_filepath))
     engine = create_engine('sqlite:///' + db.as_posix())
@@ -43,6 +44,7 @@ def load_data(database_filename):
 
     X = df['message'].values
     y = df.iloc[:, 4:].values
+    y = y.astype(int)
     category_names = df.iloc[:, 4:].columns
 
     return X, y, category_names
@@ -51,7 +53,7 @@ def load_data(database_filename):
 class PreProcessText(BaseEstimator, TransformerMixin):
 
     def remove_between_square_brackets(self, text):
-        return re.sub('\[[^]]*\]', '', text)
+        return re.sub(r'\[[^]]*\]', '', text)
 
     def replace_contractions(self, text):
         """Replace contractions in string of text"""
@@ -151,33 +153,74 @@ def tokenize(text):
 
 
 def build_model():
-    pass
+    text_pipeline = Pipeline(
+        steps=[
+            ('text_pre_process', PreProcessText()),
+            ('vect', CountVectorizer()),
+            ('transform', TfidfTransformer())
+        ]
+    )
+
+    full_pipeline = Pipeline(
+        steps=[
+            ('text_pipeline', text_pipeline),
+            ('clf', MultiOutputClassifier(RandomForestClassifier()))
+        ]
+    )
+
+    parameters = {
+        # 'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
+        # 'features__text_pipeline__vect__max_df': (0.5, 0.75, 1.0),
+        # 'features__text_pipeline__vect__max_features': (None, 5000, 10000),
+        # 'features__text_pipeline__tfidf__use_idf': (True, False),
+        # 'clf__estimator__n_estimators': [50, 100, 200],
+        # 'clf__estimator__min_samples_split': [2, 3, 4]
+    }
+
+    # create grid search object
+    cv = GridSearchCV(estimator=full_pipeline, param_grid=parameters)
+
+    return cv
 
 
-def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+def evaluate_model(model, X_test, y_test, category_names):
+    y_pred = model.predict(X_test)
+
+    for y_pred_category, y_test_category, category_name in zip(y_pred.T, y_test.T, category_names):
+        print(category_name)
+        print(
+            classification_report(
+                y_true=y_test_category,
+                y_pred=y_pred_category
+            )
+        )
 
 
 def save_model(model, model_filepath):
-    pass
+    filename = 'finalized_model.sav'
+    pickle.dump(model, open(filename, 'wb'))
 
 
 def main():
-    if len(sys.argv) == 3:
-        database_filepath, model_filepath = sys.argv[1:]
+    # if len(sys.argv) == 3:
+    if True:
+        # database_filepath, model_filepath = sys.argv[1:]
+        database_filepath, model_filepath = (
+            'data/DisasterResponse.db', 'models/classifier.pkl')
+
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
-        X, Y, category_names = load_data(database_filepath)
-        X_train, X_test, Y_train, Y_test = train_test_split(
-            X, Y, test_size=0.2)
+        X, y, category_names = load_data(database_filepath)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2)
 
         print('Building model...')
         model = build_model()
 
         print('Training model...')
-        model.fit(X_train, Y_train)
+        model.fit(X_train, y_train)
 
         print('Evaluating model...')
-        evaluate_model(model, X_test, Y_test, category_names)
+        evaluate_model(model, X_test, y_test, category_names)
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
