@@ -144,3 +144,5 @@ static
 
 # pickle file
 .pkl
+
+.gitignore
