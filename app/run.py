@@ -1,5 +1,5 @@
 from sklearn.externals import joblib
-from plotly.graph_objs import Bar
+from plotly.graph_objs import Bar, Histogram
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 from joblib import dump, load
@@ -41,6 +41,9 @@ def load_data(database_filepath):
 
     df = pd.read_sql("SELECT * FROM Messages", con=engine)
 
+    for column in df.iloc[:, 5:].columns:
+        df[column] = pd.to_numeric(df[column])
+
     return df
 
 
@@ -59,6 +62,9 @@ def index():
     # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
+    message_length = df['message'].apply(lambda x: len(x))
+    category_counts = df.iloc[:, 5:].sum()
+    category_names = list(df.iloc[:, 5:].columns)
 
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -80,7 +86,39 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+        {
+            'data': [
+                Bar(
+                    x=category_names,
+                    y=category_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Category Counts',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        {
+            'data': [
+                Histogram(
+                    x=message_length,
+                )
+            ],
+
+            'layout': {
+                'title': 'Length of Messages',
+                'xaxis': {
+                    'title': "Message Length"
+                }
+            }
+        },
     ]
 
     # encode plotly graphs in JSON

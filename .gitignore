@@ -144,3 +144,6 @@ static
 
 # pickle file
 .pkl
+models/classifier.pkl
+env
+env/
