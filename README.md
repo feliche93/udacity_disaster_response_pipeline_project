@@ -3,7 +3,7 @@
 ### Summary:
 In this project I created a web app where an emergency worker can input a new message and get classification results in several categories. Furthermore, the web app will also display visualizations of the data.
 
-![Screenshot of App](/Screenshot 2020-04-04 at 22.00.43.png?raw=true "Example Screenshot App")
+![Screenshot of App](https://github.com/feliche93/udacity_disaster_response_pipeline_project/blob/master/Screenshot%202020-04-04%20at%2022.00.43.png)
 
 ### Project Components:
 
