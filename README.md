@@ -1,5 +1,33 @@
 # Disaster Response Pipeline Project
 
+### Summary:
+In this project I created a web app where an emergency worker can input a new message and get classification results in several categories. Furthermore, the web app will also display visualizations of the data.
+
+![Screenshot of App](/Screenshot 2020-04-04 at 22.00.43.png?raw=true "Example Screenshot App")
+
+### Project Components:
+
+1. ETL Pipeline (process_data.py)
+A Python script which is a data cleaning pipeline:
+
+- Loads the messages and categories datasets
+- Merges the two datasets
+- Cleans the data
+- Stores it in a SQLite database
+
+2. ML Pipeline (train_classifier.py)
+A Python script which is a machine learning pipeline that:
+
+- Loads data from the SQLite database
+- Splits the dataset into training and test sets
+- Builds a text processing and machine learning pipeline
+- Trains and tunes a model using GridSearchCV
+- Outputs results on the test set
+- Exports the final model as a pickle file
+
+3. Flask Web App (run.py)
+A web framework that serves the model and allows a user to get messages classified.
+
 ### Installation:
 1. Clone the gitrepository
 2. In the root directory create a virtual environment by running the following command in your terminal: `python3 -m venv env`
